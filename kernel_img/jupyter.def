@@ -1,0 +1,70 @@
+Bootstrap: library
+From: ubuntu:22.04
+Stage: build
+
+%setup
+    # INSTANCE_DIR="instance_$(date)"
+    # mkdir -p "$INSTANCE_DIR"
+    # touch /file_on_host
+    # touch "$INSTANCE_DIR"
+    # touch "${SINGULARITY_ROOTFS}${INSTANCE_DIR}/file_on_guest"
+
+%files
+    # "$INSTANCE_DIR" "$INSTANCE_DIR"
+    # "$INSTANCE_DIR/opt" /opt
+
+%environment
+    # Setting environment variables
+    # This is important for connecting the jupyter
+    export PORT=8889 
+    # Use ASCII
+    export LC_ALL=C
+
+%post
+    #Installing necessary packages and dependencies
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get update
+    apt-get upgrade -y
+    apt-get install -y software-properties-common
+    apt-get install -y libffi-dev
+    add-apt-repository multiverse
+    add-apt-repository ppa:deadsnakes/ppa -y
+    apt-get update
+    apt-get install -y python3.11
+    apt-get install -y python3-pip 
+    apt-get install -y python3-venv
+    apt-get install -y git
+    apt-get install -y tmux 
+    apt-get install -y vim
+    apt-get install -y build-essential 
+    pip3 install --upgrade pip
+    pip3 install --upgrade setuptools
+    pip3 install jupyter
+
+
+%runscript
+    # Running the container's entrypoint script
+    VENV=$1
+    echo "Sourcing $VENV"
+    shift
+    exec bash -c "source $VENV/bin/activate;$@"
+
+%startscript
+    # Displaying a message when the container starts
+    echo "Started new instance on $(date)"
+
+%test
+    grep -q NAME=\"Ubuntu\" /etc/os-release
+    if [ $? -eq 0 ]; then
+        echo "Container base is Ubuntu as expected."
+    else
+        echo "Container base is not Ubuntu."
+    fi
+    python3 -m pip show jupyter
+
+%labels
+    # Adding metadata labels
+    Lujun LI
+    Version v1.0.0
+%help
+    This is a container to run jupyter and allow people to use the hpc GPU resource under jupyter
